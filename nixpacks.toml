@@ -1,0 +1,27 @@
+# Nixpacks build for the browser version of Synergism (used by Dokploy).
+#
+# Node builds the bundle and assembles public/; Caddy serves it. Nothing in the
+# runtime image needs Node, so node_modules is dropped after the build.
+
+[variables]
+  # package.json declares the range ">=22.21.0"; pin the major so Nixpacks does not guess.
+  NIXPACKS_NODE_VERSION = "22"
+  # npm ci would otherwise download the Electron binary, which the web build never uses.
+  ELECTRON_SKIP_BINARY_DOWNLOAD = "1"
+
+[phases.setup]
+  nixPkgs = ["nodejs_22", "caddy"]
+
+[phases.install]
+  dependsOn = ["setup"]
+  cmds = ["npm ci --no-audit --no-fund"]
+
+[phases.build]
+  dependsOn = ["install"]
+  cmds = [
+    "npm run build:static",
+    "rm -rf node_modules"
+  ]
+
+[start]
+  cmd = "caddy run --config Caddyfile --adapter caddyfile"

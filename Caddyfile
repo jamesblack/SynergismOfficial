@@ -1,0 +1,23 @@
+# Serves the static web root assembled by `npm run build:static`.
+# Used by nixpacks.toml as the container's start command (Dokploy/Nixpacks deploys).
+
+:{$PORT:3000} {
+	root * {$WEB_ROOT:/app/public}
+
+	encode zstd gzip
+
+	# Images are numerous and effectively immutable between releases.
+	@pictures path /Pictures/*
+	header @pictures Cache-Control "public, max-age=604800"
+
+	# dist/out.js has a fixed filename rather than a content hash, and index.html,
+	# Synergism.css and translations/ all change on every release. file_server sends
+	# ETag/Last-Modified, so "no-cache" means revalidate-then-304, not re-download.
+	#
+	# The two matchers must not overlap: Caddy applies header directives in its own
+	# sort order, not source order, so a broader rule would silently win.
+	@revalidate not path /Pictures/*
+	header @revalidate Cache-Control "no-cache"
+
+	file_server
+}
