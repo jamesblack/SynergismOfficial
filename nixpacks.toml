@@ -1,7 +1,9 @@
 # Nixpacks build for the browser version of Synergism (used by Dokploy).
 #
-# Node builds the bundle and assembles public/; Caddy serves it. Nothing in the
-# runtime image needs Node, so node_modules is dropped after the build.
+# Node builds the bundle and assembles public/; Caddy serves it. node_modules is
+# left in place: Nixpacks emits a single-stage Dockerfile, so deleting it in a
+# later layer would not shrink the image, and Nixpacks mounts a build cache at
+# node_modules/.cache that makes the directory undeletable anyway.
 
 [variables]
   # package.json declares the range ">=22.21.0"; pin the major so Nixpacks does not guess.
@@ -18,10 +20,7 @@
 
 [phases.build]
   dependsOn = ["install"]
-  cmds = [
-    "npm run build:static",
-    "rm -rf node_modules"
-  ]
+  cmds = ["npm run build:static"]
 
 [start]
   cmd = "caddy run --config Caddyfile --adapter caddyfile"
