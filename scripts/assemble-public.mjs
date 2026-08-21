@@ -8,16 +8,29 @@
 // electron/ and friends, so the files that belong on the web are copied into a
 // dedicated directory instead. Mirrors the "Prepare for deploy" step of
 // .github/workflows/deploy-ghpages.yml.
+//
+// Pass --mock for the mock deployment (see `npm run build:static:mock`), which also
+// needs msw's service worker in the web root.
 
-import { cp, mkdir, rm, stat } from 'node:fs/promises'
+import { cp, mkdir, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { parseArgs } from 'node:util'
+
+const { values } = parseArgs({
+  options: {
+    mock: {
+      type: 'boolean',
+      default: false
+    }
+  }
+})
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const outDir = path.join(root, 'public')
 
 // dist/ is copied file by file: a local `npm run dev` also leaves msw's
-// mockServiceWorker.js there, which must never reach production.
+// mockServiceWorker.js there, which must never reach a production deployment.
 const entries = [
   'dist/out.js',
   'Pictures',
@@ -26,6 +39,12 @@ const entries = [
   'Synergism.css',
   'favicon.ico'
 ]
+
+// Synergism.ts starts the worker from './mockServiceWorker.js', which resolves
+// relative to the page, so it belongs at the web root rather than in dist/.
+if (values.mock) {
+  entries.push('mockServiceWorker.js')
+}
 
 const missing = (await Promise.all(entries.map(async (entry) => await exists(path.join(root, entry)) ? null : entry)))
   .filter((entry) => entry !== null)
@@ -47,7 +66,14 @@ await Promise.all(entries.map(async (entry) => {
   console.log('\x1b[32m%s\x1b[0m', `copied ${entry}`)
 }))
 
-console.log(`\nWeb root assembled at ${outDir}`)
+// The mock deployment answers every purchase request with fake data, so keep it
+// out of search results.
+if (values.mock) {
+  await writeFile(path.join(outDir, 'robots.txt'), 'User-agent: *\nDisallow: /\n')
+  console.log('\x1b[32m%s\x1b[0m', 'wrote robots.txt')
+}
+
+console.log(`\nWeb root assembled at ${outDir} (${values.mock ? 'mock' : 'production'})`)
 
 /** @param {string} target */
 async function exists (target) {

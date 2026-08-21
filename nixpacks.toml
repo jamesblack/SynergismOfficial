@@ -4,6 +4,11 @@
 # left in place: Nixpacks emits a single-stage Dockerfile, so deleting it in a
 # later layer would not shrink the image, and Nixpacks mounts a build cache at
 # node_modules/.cache that makes the directory undeletable anyway.
+#
+# Set SYNERGISM_MOCK=1 to build the mock deployment instead: a --dev bundle whose
+# purchase/login backend is msw (src/mock/), for testing the PseudoCoin UI without
+# touching the real payment flow. Anything else, including an unset variable,
+# builds production.
 
 [variables]
   # package.json declares the range ">=22.21.0"; pin the major so Nixpacks does not guess.
@@ -20,7 +25,9 @@
 
 [phases.build]
   dependsOn = ["install"]
-  cmds = ["npm run build:static"]
+  cmds = [
+    "if [ \"$SYNERGISM_MOCK\" = \"1\" ]; then echo '>>> Building MOCK deployment'; npm run build:static:mock; else echo '>>> Building PRODUCTION deployment'; npm run build:static; fi"
+  ]
 
 [start]
   cmd = "caddy run --config Caddyfile --adapter caddyfile"
