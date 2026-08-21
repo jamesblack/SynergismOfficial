@@ -189,7 +189,7 @@ import {
   updateMaxTokens,
   updateTokens
 } from './Campaign'
-import { lastUpdated, testing, ticksPerSecond, version } from './Config'
+import { gameSpeed, lastUpdated, testing, ticksPerSecond, version } from './Config'
 import { WowCubes, WowHypercubes, WowPlatonicCubes, WowTesseracts } from './CubeExperimental'
 import { eventCheck } from './Event'
 import { initMobileStorage, storageGetItem, storageSetItem } from './events/storage-events'
@@ -4463,7 +4463,7 @@ const tick = () => {
     // compute at max delta ms to avoid negative delta
     dtEffective = Math.min(delta, dtEffective)
     // run tack and record timings
-    tack(dtEffective / 1000)
+    tack(dtEffective / 1000 * gameSpeed)
     lastUpdate += dtEffective
     delta -= dtEffective
     if (performance.now() - now > tickBudgetMs) {
