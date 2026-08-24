@@ -5022,15 +5022,6 @@ export const reloadShit = async (ignoreOfflineProgress = false) => {
 }
 
 window.addEventListener('load', async () => {
-  if (DEV || testing) {
-    const { worker } = await import('./mock/browser')
-    await worker.start({
-      serviceWorker: {
-        url: './mockServiceWorker.js'
-      }
-    })
-  }
-
   document.documentElement.dataset.mobile = `${isMobile}`
 
   if (PLATFORM === 'mobile') {

@@ -335,7 +335,7 @@ export async function handleLogin () {
     subscription = sub
     logoutElement.style.display = loggedIn ? '' : 'none'
 
-    if (!isSynergismCC && PLATFORM === 'browser' && !DEV) {
+    if (!isSynergismCC && PLATFORM === 'browser') {
       subtabElement.innerHTML = i18next.t('account.loginNotAvailable')
     } else if (hasAccount(account)) {
       if (account.member == null || Object.keys(account.member).length === 0) {

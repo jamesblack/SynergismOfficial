@@ -55,7 +55,6 @@
     "esbuild": "^0.25.5",
     "htmlhint": "^1.1.4",
     "husky": "^8.0.3",
-    "msw": "2.7.5",
     "oxlint": "^1.53.0",
     "oxlint-tsgolint": "^0.16.0",
     "shx": "^0.4.0",
@@ -75,18 +74,16 @@
     "htmllint": "npx htmlhint index.html",
     "build:esbuild": "node scripts/build-esbuild.mjs",
     "build:static": "node scripts/update-last-updated.js && npm run build:esbuild && node scripts/assemble-public.mjs",
-    "build:static:mock": "node scripts/update-last-updated.js && npm run build:esbuild -- --dev && node --run msw:init && node scripts/assemble-public.mjs --mock",
-    "watch:esbuild": "node --run msw:init && node scripts/build-esbuild.mjs --dev --watch --sourcemap",
+    "watch:esbuild": "node scripts/build-esbuild.mjs --dev --watch --sourcemap",
     "check:tsc": "npx -p typescript tsc",
     "watch:tsc": "npx -p typescript tsc --watch",
     "prepare": "husky install",
     "cloudflare:build": "node scripts/needsBundling.js || npm run build:esbuild",
-    "msw:init": "npx -y msw init . --save",
     "check-circular": "madge --circular src/",
     "electron:cp": "shx rm -rf ./dist && shx mkdir dist && shx cp -r Pictures dist/ && shx cp -r translations dist/ && shx cp index.html Synergism.css favicon.ico dist/",
     "electron:build:assets": "npm run electron:cp && npm run build:esbuild -- --platform=steam --outfile=\"./dist/dist/out.js\"",
     "electron:watch": "node scripts/build-esbuild.mjs --platform=steam --outfile=\"./dist/dist/out.js\" --dev --watch --sourcemap --no-minify",
-    "electron:dev": "npm run electron:cp && npm run build:esbuild -- --platform=steam --outfile=\"./dist/dist/out.js\" && npx -y msw init dist --save && electron electron/main.ts",
+    "electron:dev": "npm run electron:cp && npm run build:esbuild -- --platform=steam --outfile=\"./dist/dist/out.js\" && electron electron/main.ts",
     "electron:build": "npm run electron:build:assets && electron-builder --win --mac --linux",
     "electron:build:win": "npm run electron:build:assets && electron-builder --win",
     "electron:build:mac": "npm run electron:build:assets && electron-builder --mac",
@@ -119,12 +116,5 @@
   "bugs": {
     "url": "https://github.com/Pseudo-Corp/SynergismOfficial/issues"
   },
-  "homepage": "https://github.com/Pseudo-Corp/SynergismOfficial#readme",
-  "msw": {
-    "workerDirectory": [
-      ".",
-      "",
-      "dist"
-    ]
-  }
+  "homepage": "https://github.com/Pseudo-Corp/SynergismOfficial#readme"
 }

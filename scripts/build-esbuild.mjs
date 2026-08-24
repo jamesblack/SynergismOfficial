@@ -74,7 +74,6 @@ const buildOptions = {
   metafile: true,
   define: {
     PROD: `${options.prod}`,
-    DEV: `${options.dev}`,
     PLATFORM: JSON.stringify(options.platform)
   },
   plugins: [bundleSummaryPlugin()]

@@ -1,7 +1,6 @@
 import i18next from 'i18next'
 import { displayProperLoadoutCount } from './BlueberryUpgrades'
 import { corruptionLoadoutTableCreate, updateCorruptionLoadoutNames } from './Corruptions'
-import { CartTab } from './purchases/CartTab'
 import { format } from './Synergism'
 
 export type PseudoCoinUpgradeNames =
@@ -25,59 +24,85 @@ export type PseudoCoinUpgradeNames =
 type PseudoCoinUpgrades = Record<PseudoCoinUpgradeNames, number>
 type PseudoCoinUpgradeEffects = Record<PseudoCoinUpgradeNames, number>
 
-// TODO?: Something more robust to injections?
-
-export const PCoinUpgrades: PseudoCoinUpgrades = {
-  'INSTANT_UNLOCK_1': 0,
-  'INSTANT_UNLOCK_2': 0,
-  'CUBE_BUFF': 0,
-  'AMBROSIA_LUCK_BUFF': 0,
-  'AMBROSIA_GENERATION_BUFF': 0,
-  'GOLDEN_QUARK_BUFF': 0,
-  'FREE_UPGRADE_PROMOCODE_BUFF': 0,
-  'CORRUPTION_LOADOUT_SLOT_QOL': 0,
-  'AMBROSIA_LOADOUT_SLOT_QOL': 0,
-  'AUTO_POTION_FREE_POTIONS_QOL': 0,
-  'OFFLINE_TIMER_CAP_BUFF': 0,
-  'ADD_CODE_CAP_BUFF': 0,
-  'BASE_OFFERING_BUFF': 0,
-  'BASE_OBTAINIUM_BUFF': 0,
-  'RED_GENERATION_BUFF': 0,
-  'RED_LUCK_BUFF': 0
+/**
+ * The maximum level of every PseudoCoin upgrade, mirroring the shop catalogue. Every
+ * upgrade is permanently owned at its maximum level, so no level is ever fetched from
+ * the shop backend or bought.
+ */
+const PCoinMaxLevels: PseudoCoinUpgrades = {
+  'INSTANT_UNLOCK_1': 1,
+  'INSTANT_UNLOCK_2': 1,
+  'CUBE_BUFF': 5,
+  'AMBROSIA_LUCK_BUFF': 5,
+  'AMBROSIA_GENERATION_BUFF': 5,
+  'GOLDEN_QUARK_BUFF': 5,
+  'FREE_UPGRADE_PROMOCODE_BUFF': 5,
+  'CORRUPTION_LOADOUT_SLOT_QOL': 8,
+  'AMBROSIA_LOADOUT_SLOT_QOL': 8,
+  'AUTO_POTION_FREE_POTIONS_QOL': 1,
+  'OFFLINE_TIMER_CAP_BUFF': 2,
+  'ADD_CODE_CAP_BUFF': 2,
+  'BASE_OFFERING_BUFF': 5,
+  'BASE_OBTAINIUM_BUFF': 5,
+  'RED_GENERATION_BUFF': 5,
+  'RED_LUCK_BUFF': 5
 }
 
-export const PCoinUpgradeEffects: PseudoCoinUpgradeEffects = {
-  INSTANT_UNLOCK_1: 0,
-  INSTANT_UNLOCK_2: 0,
-  CUBE_BUFF: 1,
-  AMBROSIA_LUCK_BUFF: 0,
-  AMBROSIA_GENERATION_BUFF: 1,
-  GOLDEN_QUARK_BUFF: 1,
-  FREE_UPGRADE_PROMOCODE_BUFF: 1,
-  CORRUPTION_LOADOUT_SLOT_QOL: 0,
-  AMBROSIA_LOADOUT_SLOT_QOL: 0,
-  AUTO_POTION_FREE_POTIONS_QOL: 0,
-  OFFLINE_TIMER_CAP_BUFF: 1,
-  ADD_CODE_CAP_BUFF: 1,
-  BASE_OFFERING_BUFF: 0,
-  BASE_OBTAINIUM_BUFF: 0,
-  RED_GENERATION_BUFF: 1,
-  RED_LUCK_BUFF: 0
+const upgradeNames = Object.keys(PCoinMaxLevels) as PseudoCoinUpgradeNames[]
+
+const computePCoinEffect = (name: PseudoCoinUpgradeNames, level: number) => {
+  switch (name) {
+    case 'INSTANT_UNLOCK_1':
+    case 'INSTANT_UNLOCK_2':
+    case 'AUTO_POTION_FREE_POTIONS_QOL':
+      return level > 0 ? 1 : 0
+    case 'CUBE_BUFF':
+      return 1 + level * 0.06
+    case 'AMBROSIA_LUCK_BUFF':
+    case 'RED_LUCK_BUFF':
+      return level * 20
+    case 'AMBROSIA_GENERATION_BUFF':
+    case 'RED_GENERATION_BUFF':
+      return 1 + level * 0.05
+    case 'GOLDEN_QUARK_BUFF':
+      return 1 + level * 0.04
+    case 'FREE_UPGRADE_PROMOCODE_BUFF':
+      return 1 + level * 0.02
+    case 'CORRUPTION_LOADOUT_SLOT_QOL':
+    case 'AMBROSIA_LOADOUT_SLOT_QOL':
+      return level
+    case 'OFFLINE_TIMER_CAP_BUFF':
+    case 'ADD_CODE_CAP_BUFF':
+      return 1 + level
+    case 'BASE_OFFERING_BUFF':
+      return 6 * level
+    case 'BASE_OBTAINIUM_BUFF':
+      return 3 * level
+  }
 }
 
-export const initializePCoinCache = async () => {
-  const upgradesList = await CartTab.fetchUpgrades()
+const maxedEffects = () => {
+  const effects = {} as PseudoCoinUpgradeEffects
 
-  // Reset Cache
-  for (const key of Object.keys(PCoinUpgrades)) {
-    PCoinUpgrades[key as PseudoCoinUpgradeNames] = 0
-    updatePCoinEffects(key as PseudoCoinUpgradeNames, 0)
+  for (const name of upgradeNames) {
+    effects[name] = computePCoinEffect(name, PCoinMaxLevels[name])
   }
 
-  // Update Cache only for the upgrades that the player has
-  for (const upgrade of upgradesList.playerUpgrades) {
-    PCoinUpgrades[upgrade.internalName] = upgrade.level
-    updatePCoinEffects(upgrade.internalName, upgrade.level)
+  return effects
+}
+
+export const PCoinUpgrades: PseudoCoinUpgrades = { ...PCoinMaxLevels }
+
+export const PCoinUpgradeEffects: PseudoCoinUpgradeEffects = maxedEffects()
+
+/**
+ * Applies every upgrade at its maximum level. The effects are already maxed at module
+ * load; this exists because two of the QoL upgrades rebuild DOM that only exists once
+ * the game has booted.
+ */
+export const initializePCoinCache = async () => {
+  for (const name of upgradeNames) {
+    updatePCoinCache(name, PCoinMaxLevels[name])
   }
 }
 
@@ -87,58 +112,13 @@ export const updatePCoinCache = async (name: PseudoCoinUpgradeNames, level: numb
 }
 
 const updatePCoinEffects = (name: PseudoCoinUpgradeNames, level: number) => {
-  switch (name) {
-    case 'INSTANT_UNLOCK_1':
-      PCoinUpgradeEffects.INSTANT_UNLOCK_1 = level > 0 ? 1 : 0
-      break
-    case 'INSTANT_UNLOCK_2':
-      PCoinUpgradeEffects.INSTANT_UNLOCK_2 = level > 0 ? 1 : 0
-      break
-    case 'CUBE_BUFF':
-      PCoinUpgradeEffects.CUBE_BUFF = 1 + level * 0.06
-      break
-    case 'AMBROSIA_LUCK_BUFF':
-      PCoinUpgradeEffects.AMBROSIA_LUCK_BUFF = level * 20
-      break
-    case 'AMBROSIA_GENERATION_BUFF':
-      PCoinUpgradeEffects.AMBROSIA_GENERATION_BUFF = 1 + level * 0.05
-      break
-    case 'GOLDEN_QUARK_BUFF':
-      PCoinUpgradeEffects.GOLDEN_QUARK_BUFF = 1 + level * 0.04
-      break
-    case 'FREE_UPGRADE_PROMOCODE_BUFF':
-      PCoinUpgradeEffects.FREE_UPGRADE_PROMOCODE_BUFF = 1 + level * 0.02
-      break
-    case 'CORRUPTION_LOADOUT_SLOT_QOL':
-      PCoinUpgradeEffects.CORRUPTION_LOADOUT_SLOT_QOL = level
-      corruptionLoadoutTableCreate()
-      updateCorruptionLoadoutNames()
-      break
-    case 'AMBROSIA_LOADOUT_SLOT_QOL':
-      PCoinUpgradeEffects.AMBROSIA_LOADOUT_SLOT_QOL = level
-      displayProperLoadoutCount()
-      break
-    case 'AUTO_POTION_FREE_POTIONS_QOL':
-      PCoinUpgradeEffects.AUTO_POTION_FREE_POTIONS_QOL = level > 0 ? 1 : 0
-      break
-    case 'OFFLINE_TIMER_CAP_BUFF':
-      PCoinUpgradeEffects.OFFLINE_TIMER_CAP_BUFF = 1 + level
-      break
-    case 'ADD_CODE_CAP_BUFF':
-      PCoinUpgradeEffects.ADD_CODE_CAP_BUFF = 1 + level
-      break
-    case 'BASE_OFFERING_BUFF':
-      PCoinUpgradeEffects.BASE_OFFERING_BUFF = 6 * level
-      break
-    case 'BASE_OBTAINIUM_BUFF':
-      PCoinUpgradeEffects.BASE_OBTAINIUM_BUFF = 3 * level
-      break
-    case 'RED_GENERATION_BUFF':
-      PCoinUpgradeEffects.RED_GENERATION_BUFF = 1 + level * 0.05
-      break
-    case 'RED_LUCK_BUFF':
-      PCoinUpgradeEffects.RED_LUCK_BUFF = level * 20
-      break
+  PCoinUpgradeEffects[name] = computePCoinEffect(name, level)
+
+  if (name === 'CORRUPTION_LOADOUT_SLOT_QOL') {
+    corruptionLoadoutTableCreate()
+    updateCorruptionLoadoutNames()
+  } else if (name === 'AMBROSIA_LOADOUT_SLOT_QOL') {
+    displayProperLoadoutCount()
   }
 }
 

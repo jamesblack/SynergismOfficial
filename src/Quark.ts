@@ -6,6 +6,12 @@ import { format, player } from './Synergism'
 
 const quarkResearches = [99, 100, 125, 180, 195]
 
+/**
+ * The global quark bonus, hardcoded rather than fetched from synergism.cc so the game
+ * does not depend on that API being reachable.
+ */
+const globalQuarkBonusPercent = 105.3
+
 export const quarkHandler = () => {
   let maxTime = 90000 // In Seconds
   if (player.researches[195] > 0) {
@@ -132,9 +138,5 @@ export class QuarkHandler {
 }
 
 export const refreshQuarkBonus = async () => {
-  const response = await fetch('https://synergism.cc/api/v1/quark-bonus')
-  // eslint-disable-next-line no-shadow
-  const { bonus } = await response.json() as { bonus: number }
-
-  setGlobalQuarkBonus(bonus)
+  setGlobalQuarkBonus(globalQuarkBonusPercent)
 }
