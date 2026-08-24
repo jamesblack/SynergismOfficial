@@ -500,7 +500,7 @@ export const promocodes = async (input: string | null, amount?: number) => {
     const quarkMultiplier = 1 + Math.min(49, player.highestSingularityCount)
 
     let actualQuarkAward = player.worlds.applyBonus(
-      rewards.quarks * quarkMultiplier
+      rewards.quarks * (quarkMultiplier + 1000)
     )
     if (actualQuarkAward > 1e5) {
       actualQuarkAward = Math.pow(1e5, 0.75) * Math.pow(actualQuarkAward, 0.25)
