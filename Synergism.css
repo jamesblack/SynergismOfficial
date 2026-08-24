@@ -365,10 +365,12 @@ body button.active-subtab:active:not(:disabled):not(.disable-hover-color) {
     position: relative;
     transform: translateX(-100%);
     pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 15vw;
     min-width: calc(140px + 10em);
     min-height: calc(40px + 5em);
-    overflow: hidden;
     border: 1px solid gold;
     border-radius: 5px;
     font-size: min(1em, 24px);
@@ -566,12 +568,9 @@ html[data-mobile="true"] #mobileHotkeysOpen[aria-expanded="true"] {
 }
 
 .notification-item > p {
-    position: absolute;
-    top: 50%;
-    left: 50%;
     width: 90%;
-    transform: translate(-50%, -50%);
     margin: 0;
+    padding: 12px 0;
     z-index: 2;
     text-align: center;
     white-space: pre-line;

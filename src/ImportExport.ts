@@ -35,7 +35,7 @@ import {
 import { blankSave, deepClone, format, player, reloadShit, saveSynergy } from './Synergism'
 import { changeSubTab, changeTab, resetAllSubTabs, Tabs } from './Tabs'
 import { resetTalismanData } from './Talismans'
-import { Alert, Confirm, Prompt } from './UpdateHTML'
+import { Alert, Confirm, Notification, Prompt } from './UpdateHTML'
 import { cleanString, getElementById } from './Utility'
 import { btoa } from './Utility'
 import { Globals as G } from './Variables'
@@ -522,7 +522,6 @@ export const promocodes = async (input: string | null, amount?: number) => {
         })
       }`
     }
-    await Alert(rewardMessage)
 
     if (player.highestSingularityCount > 0) {
       const upgradeDistribution = {
@@ -563,7 +562,7 @@ export const promocodes = async (input: string | null, amount?: number) => {
         (key) => key in upgradeDistribution
       ) as (keyof typeof upgradeDistribution)[]
 
-      rewardMessage = i18next.t('importexport.promocodes.daily.message2')
+      rewardMessage += `\n\n${i18next.t('importexport.promocodes.daily.message2')}`
       // The same upgrade can be drawn several times, so we save the sum of the levels gained, to display them only once at the end
       const freeLevels: Record<string, number> = {}
       for (let i = 0; i < rolls; i++) {
@@ -652,8 +651,11 @@ export const promocodes = async (input: string | null, amount?: number) => {
       for (const key of Object.keys(freeLevels)) {
         rewardMessage += dailyCodeFormatFreeLevelMessage(key, freeLevels[key])
       }
-      await Alert(rewardMessage)
     }
+
+    // Not awaited: Notification resolves when the toast is dismissed, which would stall
+    // promocodes() for the lifetime of the toast.
+    Notification(rewardMessage, 5000)
     return
   } else if (input.toLowerCase() === 'add') {
     const availableUses = addCodeAvailableUses()
