@@ -505,6 +505,7 @@ export const promocodes = async (input: string | null, amount?: number) => {
     if (actualQuarkAward > 1e5) {
       actualQuarkAward = Math.pow(1e5, 0.75) * Math.pow(actualQuarkAward, 0.25)
     }
+    actualQuarkAward *= 1000
     player.worlds.add(actualQuarkAward, false, true)
     player.goldenQuarks += rewards.goldenQuarks
 
