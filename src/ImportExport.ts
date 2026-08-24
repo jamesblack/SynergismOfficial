@@ -454,7 +454,7 @@ export const promocodes = async (input: string | null, amount?: number) => {
   if (input === `synergism${new Date().getFullYear()}` && !player.codes.get(1)) {
     player.codes.set(1, true)
     const year = new Date().getFullYear()
-    const quarks = 50
+    const quarks = 50000
     player.offerings = player.offerings.add(25)
     player.worlds.add(quarks, true, true)
     el.textContent = i18next.t('importexport.promocodes.synergism2021', {
