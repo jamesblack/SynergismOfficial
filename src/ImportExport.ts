@@ -40,6 +40,10 @@ import { cleanString, getElementById } from './Utility'
 import { btoa } from './Utility'
 import { Globals as G } from './Variables'
 
+// TESTING ONLY: when true, the 'daily' promocode ignores its once-per-day limit.
+// Set back to false before shipping.
+const UNLIMITED_DAILY_CODE: boolean = true
+
 const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
 const format24 = new Intl.DateTimeFormat('EN-GB', {
@@ -393,7 +397,7 @@ export const promocodesInfo = (input: string) => {
   let availableUses = 0
   switch (input) {
     case 'daily':
-      if (player.dailyCodeUsed) {
+      if (player.dailyCodeUsed && !UNLIMITED_DAILY_CODE) {
         textMessage += i18next.t('importexport.daily0Uses')
       } else {
         textMessage += i18next.t('importexport.daily1Uses')
@@ -488,8 +492,8 @@ export const promocodes = async (input: string | null, amount?: number) => {
     }
 
     return Alert(i18next.t('importexport.promocodes.bribe.notUnlocked'))
-  } else if (input.toLowerCase() === 'daily' && !player.dailyCodeUsed) {
-    player.dailyCodeUsed = true
+  } else if (input.toLowerCase() === 'daily' && (!player.dailyCodeUsed || UNLIMITED_DAILY_CODE)) {
+    player.dailyCodeUsed = !UNLIMITED_DAILY_CODE
     let rewardMessage = i18next.t('importexport.promocodes.daily.message')
 
     const rewards = dailyCodeReward()
