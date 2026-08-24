@@ -4462,8 +4462,10 @@ const tick = () => {
     dtEffective += deltaMean > 16 ? Math.min(3600 * 1000, deltaMean - dt) : 0
     // compute at max delta ms to avoid negative delta
     dtEffective = Math.min(delta, dtEffective)
-    // run tack and record timings
-    tack(dtEffective / 1000 * gameSpeed)
+    // run tack and record timings. realDt is the unscaled wall clock elapsed
+    // this tack; dt is that same span in simulated game time.
+    const realDt = dtEffective / 1000
+    tack(realDt * gameSpeed, realDt)
     lastUpdate += dtEffective
     delta -= dtEffective
     if (performance.now() - now > tickBudgetMs) {
@@ -4472,8 +4474,13 @@ const tick = () => {
   }
 }
 
+/**
+ * @param dt Simulated game time, in seconds, elapsed this tick. Scaled by gameSpeed.
+ * @param realDt Wall clock time, in seconds, elapsed this tick. Never scaled.
+ *   Use this for automation whose thresholds the player sets in real seconds.
+ */
 // eslint-disable-next-line no-shadow
-const tack = (dt: number) => {
+const tack = (dt: number, realDt: number) => {
   if (!G.timeWarp) {
     // Adds Resources (coins, ants, etc)
     const timeMult = calculateGlobalSpeedMult()
@@ -4488,7 +4495,7 @@ const tack = (dt: number) => {
     addTimers('quarks', dt)
     addTimers('goldenQuarks', dt)
     addTimers('octeracts', dt)
-    addTimers('singularity', dt)
+    addTimers('singularity', dt, realDt)
     addTimers('autoPotion', dt)
     addTimers('ambrosia', dt)
     addTimers('redAmbrosia', dt)
@@ -4570,10 +4577,13 @@ const tack = (dt: number) => {
     automaticTools('addOfferings', dt / 2)
   }
 
-  // Challenge Sweep State Machine
-  tickChallengeSweep(dt)
+  // Challenge Sweep State Machine. Its start/exit/enter thresholds are set by
+  // the player in real seconds, so it is paced by the wall clock, not gameSpeed.
+  tickChallengeSweep(realDt)
 
-  // Check for automatic resets
+  // Check for automatic resets. The AutoResetModes.time thresholds below
+  // (prestigeamount / transcendamount / reincarnationamount) are set by the
+  // player in real seconds, so their accumulators run on the wall clock.
   // Auto Prestige.
   if (player.resetToggleModes.prestige === AutoResetModes.amount) {
     if (
@@ -4589,7 +4599,7 @@ const tack = (dt: number) => {
     }
   }
   if (player.resetToggleModes.prestige === AutoResetModes.time) {
-    G.autoResetTimers.prestige += dt
+    G.autoResetTimers.prestige += realDt
     const time = Math.max(0.01, player.prestigeamount)
     if (
       player.toggles[15]
@@ -4617,7 +4627,7 @@ const tack = (dt: number) => {
     }
   }
   if (player.resetToggleModes.transcend === AutoResetModes.time) {
-    G.autoResetTimers.transcension += dt
+    G.autoResetTimers.transcension += realDt
     const time = Math.max(0.01, player.transcendamount)
     if (
       player.toggles[21]
@@ -4632,7 +4642,7 @@ const tack = (dt: number) => {
   }
 
   if (player.currentChallenge.ascension !== 12) {
-    G.autoResetTimers.reincarnation += dt
+    G.autoResetTimers.reincarnation += realDt
     if (player.resetToggleModes.reincarnation === AutoResetModes.time) {
       const time = Math.max(0.01, player.reincarnationamount)
       if (

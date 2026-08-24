@@ -50,9 +50,11 @@ const octeractGiveawayLevels = [160, 173, 185, 194, 204, 210, 219, 229, 240, 249
 /**
  * addTimers will add (in milliseconds) time to the reset counters, and quark export timer
  * @param input
- * @param time
+ * @param time Simulated game time elapsed. Scaled by gameSpeed by the live tick.
+ * @param realTime Wall clock time elapsed. Only differs from `time` when the live
+ *   tick scales the simulation; offline catch-up runs at 1x, so it may default to `time`.
  */
-export const addTimers = (input: TimerInput, time = 0) => {
+export const addTimers = (input: TimerInput, time = 0, realTime = time) => {
   const timeMultiplier = input === 'prestige'
       || input === 'transcension'
       || input === 'reincarnation'
@@ -85,7 +87,9 @@ export const addTimers = (input: TimerInput, time = 0) => {
     }
     case 'singularity': {
       const singularitySpeedMulti = getAmbrosiaUpgradeEffects('ambrosiaBrickOfLead', 'singularitySpeedMult')
-      player.ascensionCounterRealReal += time
+      // The "truly real life" timer is wall clock by definition, so it never
+      // takes the simulated clock.
+      player.ascensionCounterRealReal += realTime
       player.singularityCounter += time * timeMultiplier * singularitySpeedMulti
 
       if (player.insideSingularityChallenge) {
