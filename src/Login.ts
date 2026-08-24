@@ -10,13 +10,14 @@ import {
   calculateOffline,
   calculateRedAmbrosiaGenerationSpeed
 } from './Calculate'
-import { isSynergismCC } from './Config'
+import { infiniteConsumables, isSynergismCC } from './Config'
 import { updateGlobalsIsEvent } from './Event'
 import { storageGetItem } from './events/storage-events'
 import { addTimers, automaticTools } from './Helper'
 import { exportData, importSynergism, saveFilename } from './ImportExport'
 import { updateLotusDisplay } from './purchases/ConsumablesTab'
 import { setLotusBalanceLoading, setPseudoCoinBalanceLoading } from './purchases/PseudoCoinBalances'
+import { fakeServerResponse } from './purchases/TestingConsumables'
 import { updatePseudoCoins } from './purchases/UpgradesSubtab'
 import { QuarkHandler, setPersonalQuarkBonus } from './Quark'
 import { updatePrestigeCount, updateReincarnationCount, updateTranscensionCount } from './Reset'
@@ -198,6 +199,8 @@ const messageSchema = z.preprocess(
     z.object({ type: z.literal('warn'), message: z.string() })
   ])
 )
+
+type ServerMessage = z.infer<typeof messageSchema>
 
 /**
  * @see https://discord.com/developers/docs/resources/user#user-object
@@ -763,132 +766,160 @@ async function handleWebSocket () {
   ws.addEventListener('message', (ev) => {
     if (ev.data === 'pong') return
 
-    const data = messageSchema.parse(ev.data)
-
-    if (data.type === 'warn') {
-      Notification(data.message, 5_000)
-    } else if (data.type === 'error') {
-      Notification(data.message, 5_000)
-      resetWebSocket()
-    } else if (data.type === 'consumed') {
-      const consumable = allDurableConsumables[data.consumable as PseudoCoinConsumableNames]
-      consumable.ends.push(data.startedAt + 3600 * 1000)
-      consumable.amount++
-
-      Notification(i18next.t('account.consumables.redeemed', { consumable: data.displayName }))
-      setFavicon('./Pictures/favicon-notification.ico')
-    } else if (data.type === 'consumable-ended') {
-      // Because of the invariant that the timestamps are sorted, we can just remove the first element
-      const consumable = allDurableConsumables[data.consumable as PseudoCoinConsumableNames]
-      consumable.ends.shift()
-      consumable.amount--
-
-      Notification(i18next.t('account.consumables.ended', { consumable: data.name }))
-
-      if (consumable.amount === 0) {
-        setFavicon('./favicon.ico')
-      }
-    } else if (data.type === 'join') {
-      Notification(i18next.t('account.consumables.connectionEstablished'), 1000)
-    } else if (data.type === 'info-all') {
-      resetWebSocket() // So that we can get an accurate count each time
-      if (data.active.length !== 0) {
-        let message = `${i18next.t('account.consumables.joined')}\n`
-
-        for (const { internalName, endsAt, name } of data.active) {
-          const consumable = allDurableConsumables[internalName as PseudoCoinConsumableNames]
-          consumable.ends.push(endsAt)
-          consumable.amount++
-          consumable.displayName = name
-        }
-        // Are these already in order? I assume so but just to be sure
-        for (const item of Object.values(allDurableConsumables)) {
-          item.ends.sort((a, b) => a - b)
-        }
-
-        for (const { amount, displayName } of Object.values(allDurableConsumables)) {
-          message += `${displayName} (x${amount})`
-        }
-
-        Notification(message)
-
-        setFavicon('./Pictures/favicon-notification.ico')
-      }
-
-      tips = data.tips
-
-      const lotusInventory = data.inventory.find((item) => item.type === 'LOTUS')
-
-      ownedLotus = lotusInventory?.amount ?? 0
-      usedLotus = lotusInventory?.used ?? 0
-      lotusInventoryLoaded = true
-      try {
-        updateLotusDisplay()
-      } catch {
-        // This can throw if /consumables/list has not returned a response by the time this runs
-      }
-    } else if (data.type === 'thanks') {
-      Alert(i18next.t('pseudoCoins.consumables.thanks'))
-      updatePseudoCoins()
-    } else if (data.type === 'tip-backlog' || data.type === 'tips') {
-      tips += data.tips
-
-      Notification(i18next.t('pseudoCoins.consumables.tipReceived', { offlineTime: data.tips }))
-    } else if (data.type === 'applied-tip') {
-      tips = data.remaining
-      calculateOffline(data.amount * 60, true).catch(console.error)
-    } else if (data.type === 'time-skip') {
-      const timeSkipName = data.consumableName as PseudoCoinTimeskipNames
-      const minutes = data.amount
-
-      afterOfflineProgress().then(() => {
-        // Do the thing with the timeSkip
-        activateTimeSkip(timeSkipName, minutes)
-        saveSynergy()
-
-        sendToWebsocket(JSON.stringify({
-          type: 'confirm',
-          id: data.id,
-          consumableId: data.consumableName
-        }))
-      }).catch(console.error)
-
-      setTimeout(updatePseudoCoins, 4000)
-    } else if (data.type === 'lotus') {
-      buyLotusNotification(data.amount)
-      ownedLotus += data.amount
-      updateLotusDisplay()
-
-      setTimeout(updatePseudoCoins, 4000)
-    } else if (data.type === 'applied-lotus') {
-      ownedLotus -= 1
-      usedLotus = data.lifetimePurchased
-      lotusTimeExpiresAt = Date.now() + data.remaining
-
-      updateLotusDisplay()
-    } else if (data.type === 'lotus-ended') {
-      lotusTimeExpiresAt = undefined
-
-      updateLotusDisplay()
-    } else if (data.type === 'lotus-active') {
-      lotusTimeExpiresAt = Date.now() + data.remainingMs
-      updateLotusDisplay()
-
-      Notification(i18next.t('pseudoCoins.lotus.lotusActive'))
-    } else {
-      // eslint-disable-next-line unicorn/consistent-function-scoping
-      const assertNever = (_x: never) => {
-        throw new Error()
-      }
-
-      assertNever(data)
-    }
-
-    updateGlobalsIsEvent()
+    handleServerMessage(messageSchema.parse(ev.data))
   })
 }
 
+/**
+ * Applies a message from the consumables server. Extracted from the websocket listener so that
+ * `infiniteConsumables` fakes can be fed through the exact same code path as real traffic.
+ */
+const handleServerMessage = (data: ServerMessage) => {
+  if (data.type === 'warn') {
+    Notification(data.message, 5_000)
+  } else if (data.type === 'error') {
+    Notification(data.message, 5_000)
+    resetWebSocket()
+  } else if (data.type === 'consumed') {
+    const consumable = allDurableConsumables[data.consumable as PseudoCoinConsumableNames]
+    consumable.ends.push(data.startedAt + 3600 * 1000)
+    consumable.amount++
+
+    Notification(i18next.t('account.consumables.redeemed', { consumable: data.displayName }))
+    setFavicon('./Pictures/favicon-notification.ico')
+  } else if (data.type === 'consumable-ended') {
+    // Because of the invariant that the timestamps are sorted, we can just remove the first element
+    const consumable = allDurableConsumables[data.consumable as PseudoCoinConsumableNames]
+    consumable.ends.shift()
+    consumable.amount--
+
+    Notification(i18next.t('account.consumables.ended', { consumable: data.name }))
+
+    if (consumable.amount === 0) {
+      setFavicon('./favicon.ico')
+    }
+  } else if (data.type === 'join') {
+    Notification(i18next.t('account.consumables.connectionEstablished'), 1000)
+  } else if (data.type === 'info-all') {
+    resetWebSocket() // So that we can get an accurate count each time
+    if (data.active.length !== 0) {
+      let message = `${i18next.t('account.consumables.joined')}\n`
+
+      for (const { internalName, endsAt, name } of data.active) {
+        const consumable = allDurableConsumables[internalName as PseudoCoinConsumableNames]
+        consumable.ends.push(endsAt)
+        consumable.amount++
+        consumable.displayName = name
+      }
+      // Are these already in order? I assume so but just to be sure
+      for (const item of Object.values(allDurableConsumables)) {
+        item.ends.sort((a, b) => a - b)
+      }
+
+      for (const { amount, displayName } of Object.values(allDurableConsumables)) {
+        message += `${displayName} (x${amount})`
+      }
+
+      Notification(message)
+
+      setFavicon('./Pictures/favicon-notification.ico')
+    }
+
+    tips = data.tips
+
+    const lotusInventory = data.inventory.find((item) => item.type === 'LOTUS')
+
+    ownedLotus = lotusInventory?.amount ?? 0
+    usedLotus = lotusInventory?.used ?? 0
+    lotusInventoryLoaded = true
+    try {
+      updateLotusDisplay()
+    } catch {
+      // This can throw if /consumables/list has not returned a response by the time this runs
+    }
+  } else if (data.type === 'thanks') {
+    Alert(i18next.t('pseudoCoins.consumables.thanks'))
+    updatePseudoCoins()
+  } else if (data.type === 'tip-backlog' || data.type === 'tips') {
+    tips += data.tips
+
+    Notification(i18next.t('pseudoCoins.consumables.tipReceived', { offlineTime: data.tips }))
+  } else if (data.type === 'applied-tip') {
+    tips = data.remaining
+    calculateOffline(data.amount * 60, true).catch(console.error)
+  } else if (data.type === 'time-skip') {
+    const timeSkipName = data.consumableName as PseudoCoinTimeskipNames
+    const minutes = data.amount
+
+    afterOfflineProgress().then(() => {
+      // Do the thing with the timeSkip
+      activateTimeSkip(timeSkipName, minutes)
+      saveSynergy()
+
+      sendToWebsocket(JSON.stringify({
+        type: 'confirm',
+        id: data.id,
+        consumableId: data.consumableName
+      }))
+    }).catch(console.error)
+
+    setTimeout(updatePseudoCoins, 4000)
+  } else if (data.type === 'lotus') {
+    buyLotusNotification(data.amount)
+    ownedLotus += data.amount
+    updateLotusDisplay()
+
+    setTimeout(updatePseudoCoins, 4000)
+  } else if (data.type === 'applied-lotus') {
+    ownedLotus -= 1
+    usedLotus = data.lifetimePurchased
+    lotusTimeExpiresAt = Date.now() + data.remaining
+
+    updateLotusDisplay()
+  } else if (data.type === 'lotus-ended') {
+    lotusTimeExpiresAt = undefined
+
+    updateLotusDisplay()
+  } else if (data.type === 'lotus-active') {
+    lotusTimeExpiresAt = Date.now() + data.remainingMs
+    updateLotusDisplay()
+
+    Notification(i18next.t('pseudoCoins.lotus.lotusActive'))
+  } else {
+    // eslint-disable-next-line unicorn/consistent-function-scoping
+    const assertNever = (_x: never) => {
+      throw new Error()
+    }
+
+    assertNever(data)
+  }
+
+  updateGlobalsIsEvent()
+}
+
 export function sendToWebsocket (message: string) {
+  // Dev-only: fake the server's reply locally so consumables are free, unlimited and work
+  // while signed out. Deliberately before the isLoggedIn check.
+  if (infiniteConsumables) {
+    const faked = fakeServerResponse(message, { usedLotus })
+
+    if (faked !== null) {
+      for (const { message: fake, delayMs } of faked) {
+        // Validated with the same schema as real traffic, so a malformed fake throws here
+        // instead of silently corrupting consumable state.
+        const parsed = messageSchema.parse(JSON.stringify(fake))
+
+        if (delayMs === undefined) {
+          handleServerMessage(parsed)
+        } else {
+          setTimeout(() => handleServerMessage(parsed), delayMs)
+        }
+      }
+
+      return
+    }
+  }
+
   if (!isLoggedIn()) return
 
   if (ws?.readyState !== WebSocket.OPEN) {

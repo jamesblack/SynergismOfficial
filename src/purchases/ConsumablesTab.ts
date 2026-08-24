@@ -5,6 +5,7 @@ import { format } from '../Synergism'
 import { Alert, Confirm } from '../UpdateHTML'
 import { memoize } from '../Utility'
 import { setLotusBalance, setLotusBalanceLoading } from './PseudoCoinBalances'
+import { recordConsumableCatalog } from './TestingConsumables'
 import { updatePseudoCoins } from './UpgradesSubtab'
 
 interface ConsumableListItems {
@@ -23,6 +24,10 @@ const initializeConsumablesTab = memoize(() => {
   fetch('https://synergism.cc/consumables/list')
     .then((r) => r.json())
     .then((consumables: ConsumableListItems[]) => {
+      // Durations/names are needed by the infiniteConsumables dev cheat, which only sees an
+      // internal name on the outgoing message.
+      recordConsumableCatalog(consumables)
+
       // Thank you Gemini for the number test
       // TODO: Erm...
       const durableConsume = consumables.filter((u) => u.internalName.includes('BELL'))
