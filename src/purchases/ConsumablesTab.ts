@@ -1,11 +1,12 @@
 import i18next from 'i18next'
 import { DOMCacheGetOrSet } from '../Cache/DOM'
+import { infiniteConsumables } from '../Config'
 import { getOwnedLotus, getUsedLotus, isLotusInventoryLoaded, sendToWebsocket } from '../Login'
 import { format } from '../Synergism'
 import { Alert, Confirm } from '../UpdateHTML'
 import { memoize } from '../Utility'
 import { setLotusBalance, setLotusBalanceLoading } from './PseudoCoinBalances'
-import { recordConsumableCatalog } from './TestingConsumables'
+import { getLocalCatalog, recordConsumableCatalog } from './TestingConsumables'
 import { updatePseudoCoins } from './UpgradesSubtab'
 
 interface ConsumableListItems {
@@ -20,9 +21,18 @@ type TimeSkipCategories = 'GLOBAL' | 'ASCENSION' | 'AMBROSIA'
 
 const tab = document.querySelector<HTMLElement>('#pseudoCoins > #consumablesSection')!
 
+/**
+ * The live catalog endpoint sends no CORS headers, so the fetch is blocked whenever the game is
+ * served from anywhere but synergism.cc. That is fine in production, but it leaves the shop empty
+ * everywhere the infiniteConsumables cheat is actually used, so that path reads a bundled copy.
+ */
+const loadCatalog = (): Promise<ConsumableListItems[]> =>
+  infiniteConsumables
+    ? Promise.resolve(getLocalCatalog())
+    : fetch('https://synergism.cc/consumables/list').then((r) => r.json())
+
 const initializeConsumablesTab = memoize(() => {
-  fetch('https://synergism.cc/consumables/list')
-    .then((r) => r.json())
+  loadCatalog()
     .then((consumables: ConsumableListItems[]) => {
       // Durations/names are needed by the infiniteConsumables dev cheat, which only sees an
       // internal name on the outgoing message.
