@@ -1415,9 +1415,7 @@ export const visualUpdateCubes = () => {
       DOMCacheGetOrSet('heptGridPowderBalance').textContent = format(
         player.overfluxPowder
       )
-      DOMCacheGetOrSet('heptGridPowderWarps').textContent = format(
-        player.dailyPowderResetUses
-      )
+      DOMCacheGetOrSet('heptGridPowderWarps').textContent = '∞'
       break
     default:
       break

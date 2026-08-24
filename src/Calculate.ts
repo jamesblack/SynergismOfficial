@@ -383,6 +383,13 @@ export const calculateAmbrosiaGenerationSpeed = () => {
 
 export const calculatePowderConversion = () => calculateTotalStat(allPowderMultiplierStats)
 
+/**
+ * The total number of Day Warps the player has bought. Warps themselves are unlimited, so this is
+ * used purely as the Overdrive (autoWarpCheck) Quark multiplier base - it no longer decays as warps
+ * are used. Mirrors the daily seeding of player.dailyPowderResetUses.
+ */
+export const calculateMaxWarps = () => 1 + getShopUpgradeEffects('extraWarp', 'additionalWarps')
+
 export const calculateGoldenQuarks = () => calculateTotalStat(allGoldenQuarkMultiplierStats)
 export const calculateGoldenQuarkCost = () => calculateTotalStat(allGoldenQuarkPurchaseCostStats)
 
@@ -1335,7 +1342,7 @@ export const calculateCubeQuarkMultiplier = () => {
       )
       - 11)
     * getShopUpgradeEffects('cubeToQuarkAll', 'quarkMult')
-    * (player.autoWarpCheck ? 1 + player.dailyPowderResetUses : 1)
+    * (player.autoWarpCheck ? 1 + calculateMaxWarps() : 1)
   )
 }
 
@@ -1587,7 +1594,7 @@ export const dailyResetCheck = () => {
     player.dayCheck = day
 
     forcedDailyReset(true)
-    player.dailyPowderResetUses = 1 + getShopUpgradeEffects('extraWarp', 'additionalWarps')
+    player.dailyPowderResetUses = calculateMaxWarps()
     player.dailyCodeUsed = false
 
     DOMCacheGetOrSet('cubeQuarksOpenRequirement').style.display = 'block'

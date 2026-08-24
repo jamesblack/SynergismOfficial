@@ -62,6 +62,7 @@ import { toggleAutobuyAntUpgrade } from './Features/Ants/toggles/autobuy-upgrade
 import { toggleMaxBuyAntProducer } from './Features/Ants/toggles/max-producer-buy'
 import { toggleMaxBuyAntUpgrade } from './Features/Ants/toggles/max-upgrade-buy'
 import {
+  convertOverfluxOrbsToPowder,
   craftHepteracts,
   expandHepteracts,
   hepteractDescriptions,
@@ -1507,6 +1508,7 @@ export const generateEventHandlers = () => {
   DOMCacheGetOrSet('hepteractToQuark').addEventListener('mouseover', () => hepteractToOverfluxOrbDescription())
   DOMCacheGetOrSet('hepteractToQuarkTrade').addEventListener('click', () => tradeHepteractToOverfluxOrb())
   DOMCacheGetOrSet('hepteractToQuarkTradeMax').addEventListener('click', () => tradeHepteractToOverfluxOrb(true))
+  DOMCacheGetOrSet('hepteractToQuarkConvert').addEventListener('click', () => convertOverfluxOrbsToPowder())
   DOMCacheGetOrSet('hepteractToQuarkTradeAuto').addEventListener('click', () => toggleAutoBuyOrbs())
   DOMCacheGetOrSet('overfluxPowder').addEventListener('mouseover', () => overfluxPowderDescription())
   DOMCacheGetOrSet('powderDayWarp').addEventListener('click', () => overfluxPowderWarp(false))

@@ -4,6 +4,7 @@ import { DOMCacheGetOrSet } from './Cache/DOM'
 import {
   calculateCubeMultFromPowder,
   calculateCubeQuarkMultiplier,
+  calculateMaxWarps,
   calculatePowderConversion,
   calculateQuarkMultFromPowder,
   forcedDailyReset
@@ -801,6 +802,52 @@ export const tradeHepteractToOverfluxOrb = async (buyMax?: boolean) => {
   }
 }
 
+/**
+ * Forces the player's Overflux Orbs to convert into Overflux Powder immediately, at the same rate the
+ * daily reset would have used. Only Orbs above the Challenge 15 free-orb floor are converted, so the
+ * floor cannot be farmed by clicking repeatedly.
+ * @returns Alert of either conversion failure or success
+ */
+export const convertOverfluxOrbsToPowder = async () => {
+  const freeOrbs = Globals.challenge15Rewards.freeOrbs.value
+  const convertibleOrbs = Math.max(0, player.overfluxOrbs - freeOrbs)
+
+  if (convertibleOrbs <= 0) {
+    return Alert(i18next.t('hepteracts.noOrbsToConvert'))
+  }
+
+  const powderGain = convertibleOrbs * calculatePowderConversion()
+
+  if (player.toggles[35]) {
+    const convertYesPlz = await Confirm(i18next.t('hepteracts.convertOrbsPrompt', {
+      x: format(convertibleOrbs),
+      y: format(powderGain, 2)
+    }))
+    if (!convertYesPlz) {
+      return Alert(i18next.t('hepteracts.cancelled'))
+    }
+  }
+
+  // The player may have gained Orbs, or had them expire, while the confirmation was open. Recompute so
+  // the balance can never be driven below the free-orb floor.
+  const orbsToConvert = Math.max(0, player.overfluxOrbs - Globals.challenge15Rewards.freeOrbs.value)
+
+  if (orbsToConvert <= 0) {
+    return Alert(i18next.t('hepteracts.noOrbsToConvert'))
+  }
+
+  const powderConverted = orbsToConvert * calculatePowderConversion()
+  player.overfluxOrbs -= orbsToConvert
+  player.overfluxPowder += powderConverted
+
+  if (player.toggles[35]) {
+    return Alert(i18next.t('hepteracts.convertedOrbs', {
+      x: format(orbsToConvert),
+      y: format(powderConverted, 2)
+    }))
+  }
+}
+
 export const toggleAutoBuyOrbs = (newValue?: boolean, firstLoad = false) => {
   const HTML = DOMCacheGetOrSet('hepteractToQuarkTradeAuto')
 
@@ -842,8 +889,8 @@ export const overfluxPowderDescription = () => {
   DOMCacheGetOrSet('hepteractCostText').style.display = 'none'
 
   DOMCacheGetOrSet('powderDayWarpText').style.display = 'block'
-  DOMCacheGetOrSet('powderDayWarpText').textContent = i18next.t('hepteracts.dayWarpsRemaining', {
-    x: player.dailyPowderResetUses
+  DOMCacheGetOrSet('powderDayWarpText').textContent = i18next.t('hepteracts.warpsUnlimited', {
+    x: format(1 + calculateMaxWarps(), 2, true)
   })
 }
 
@@ -854,12 +901,6 @@ export const overfluxPowderDescription = () => {
  */
 export const overfluxPowderWarp = async (auto: boolean) => {
   if (!auto) {
-    if (player.autoWarpCheck) {
-      return Alert(i18next.t('hepteracts.warpImpossible'))
-    }
-    if (player.dailyPowderResetUses <= 0) {
-      return Alert(i18next.t('hepteracts.machineCooldown'))
-    }
     if (player.overfluxPowder < 25) {
       return Alert(i18next.t('hepteracts.atleastPowder'))
     }
@@ -869,41 +910,31 @@ export const overfluxPowderWarp = async (auto: boolean) => {
         return Alert(i18next.t('hepteracts.walkAwayMachine'))
       }
     } else {
+      // Re-check, since the player may have spent Powder while the confirmation was open
+      if (player.overfluxPowder < 25) {
+        return Alert(i18next.t('hepteracts.atleastPowder'))
+      }
       player.overfluxPowder -= 25
-      player.dailyPowderResetUses -= 1
       forcedDailyReset()
       if (player.toggles[35]) {
         return Alert(i18next.t('hepteracts.useMachine'))
       }
     }
   } else {
+    // Overdrive is a plain toggle: warping is unlimited, so turning it off no longer costs anything.
     if (player.autoWarpCheck) {
-      const a = await Confirm(i18next.t('hepteracts.useAllWarpsPrompt'))
-      if (a) {
-        DOMCacheGetOrSet('warpAuto').textContent = i18next.t('general.autoOffColon')
-        DOMCacheGetOrSet('warpAuto').style.border = '2px solid red'
-        player.autoWarpCheck = false
-        player.dailyPowderResetUses = 0
-        return Alert(i18next.t('hepteracts.machineCooldown'))
-      } else {
-        if (player.toggles[35]) {
-          return Alert(i18next.t('hepteracts.machineDidNotConsume'))
-        }
+      DOMCacheGetOrSet('warpAuto').textContent = i18next.t('general.autoOffColon')
+      DOMCacheGetOrSet('warpAuto').style.border = '2px solid red'
+      player.autoWarpCheck = false
+      if (player.toggles[35]) {
+        return Alert(i18next.t('hepteracts.machineUsualContinue'))
       }
     } else {
-      const a = await Confirm(i18next.t('hepteracts.boostQuarksPrompt'))
-      if (a) {
-        DOMCacheGetOrSet('warpAuto').textContent = i18next.t('general.autoOnColon')
-        DOMCacheGetOrSet('warpAuto').style.border = '2px solid green'
-        player.autoWarpCheck = true
-        if (player.dailyPowderResetUses === 0) {
-          return Alert(i18next.t('hepteracts.machineOverdrive'))
-        }
+      DOMCacheGetOrSet('warpAuto').textContent = i18next.t('general.autoOnColon')
+      DOMCacheGetOrSet('warpAuto').style.border = '2px solid green'
+      player.autoWarpCheck = true
+      if (player.toggles[35]) {
         return Alert(i18next.t('hepteracts.machineInOverdrive'))
-      } else {
-        if (player.toggles[35]) {
-          return Alert(i18next.t('hepteracts.machineUsualContinue'))
-        }
       }
     }
   }

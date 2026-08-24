@@ -1,3 +1,4 @@
+import { calculateMaxWarps } from '../../../../../../../../Calculate'
 import { player } from '../../../../../../../../Synergism'
 import {
   calculateRebornELOThresholds,
@@ -29,6 +30,6 @@ export const availableQuarksFromELO = () => {
 
   let antQuarkMult = quarksFromELOMult()
   antQuarkMult *= stageMult
-  antQuarkMult *= (player.autoWarpCheck) ? 1 + player.dailyPowderResetUses : 1
+  antQuarkMult *= (player.autoWarpCheck) ? 1 + calculateMaxWarps() : 1
   return Math.max(0, player.worlds.applyBonus(baseQuarks) * antQuarkMult - player.ants.quarksGainedFromAnts)
 }
