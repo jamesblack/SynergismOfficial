@@ -1100,7 +1100,7 @@ export const sacrificeOfferings = (rune: RuneKeys, budget: Decimal, auto = false
     return
   }
 
-  if (auto && rune === 'infiniteAscent' && player.highestSingularityCount < 30) {
+  if (auto && rune === 'infiniteAscent' && player.highestSingularityCount < 10) {
     return
   }
 

@@ -368,7 +368,7 @@ export const automaticTools = (input: AutoToolInput, time: number) => {
           }
 
           // Do not purchase IA under s30
-          if (player.highestSingularityCount < 30 && runes.infiniteAscent.isUnlocked()) {
+          if (player.highestSingularityCount < 10 && runes.infiniteAscent.isUnlocked()) {
             numUnlocked -= 1
           }
 
