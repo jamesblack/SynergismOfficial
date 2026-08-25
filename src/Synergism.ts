@@ -2748,7 +2748,7 @@ export const crystalUpgrade3Base = (maxBase?: number): number => {
 }
 
 export const crystalUpgrade3CrystalMultiplier = (base?: number): Decimal => {
-  const baseToUse = base ?? crystalUpgrade3Base()
+  const baseToUse = base ?? crystalUpgrade3Base()F
   const crystalProducersOwned = player.firstOwnedDiamonds
     + player.secondOwnedDiamonds
     + player.thirdOwnedDiamonds
@@ -3777,7 +3777,7 @@ export const resetCheck = async (
     }
 
     if (runes.antiquities.level === 0) {
-      return Alert(i18next.t('main.noAntiquity'))
+      rune.antiquities.level = 1
     }
 
     const thankSing = 300
