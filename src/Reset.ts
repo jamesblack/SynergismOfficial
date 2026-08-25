@@ -1019,10 +1019,7 @@ const updateSingularityMilestoneAwards = (singularityReset = true): void => {
 
 export const singularity = (setSingNumber = -1) => {
   if (runes.antiquities.level === 0 && setSingNumber === -1) {
-    Alert(
-      'You nearly triggered a double singularity bug! Oh no! Luckily, our staff prevented this from happening.'
-    )
-    return
+    runes.antiquities.level = 1
   }
 
   const antiquitiesPurchased = runes.antiquities.level > 0
