@@ -2748,7 +2748,7 @@ export const crystalUpgrade3Base = (maxBase?: number): number => {
 }
 
 export const crystalUpgrade3CrystalMultiplier = (base?: number): Decimal => {
-  const baseToUse = base ?? crystalUpgrade3Base()F
+  const baseToUse = base ?? crystalUpgrade3Base()
   const crystalProducersOwned = player.firstOwnedDiamonds
     + player.secondOwnedDiamonds
     + player.thirdOwnedDiamonds
