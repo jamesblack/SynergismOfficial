@@ -496,7 +496,7 @@ export const promocodes = async (input: string | null, amount?: number) => {
     player.dailyCodeUsed = !UNLIMITED_DAILY_CODE
     let rewardMessage = i18next.t('importexport.promocodes.daily.message')
 
-    const rewards = dailyCodeReward() * 25000
+    const rewards = dailyCodeReward()
     const quarkMultiplier = 1 + Math.min(49, player.highestSingularityCount)
 
     let actualQuarkAward = player.worlds.applyBonus(
@@ -1162,7 +1162,7 @@ const dailyCodeReward = () => {
     quarks += 500
   }
 
-  quarks *= getShopUpgradeEffects('shopImprovedDaily', 'dailyCodeQuarkMult')
+  quarks *= getShopUpgradeEffects('shopImprovedDaily', 'dailyCodeQuarkMult') * 500000
   quarks = Math.floor(quarks)
 
   if (singularity) {
