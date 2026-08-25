@@ -50,7 +50,7 @@ export const showSacrifice = () => {
   const time = Date.now()
   // Lotus is active.
   const lotusTimeExpiresAt = getLotusTimeExpiresAt()
-  const lotusActive = lotusTimeExpiresAt !== undefined && time < lotusTimeExpiresAt
+  const lotusActive = true
   if (lotusActive) {
     rebornELOPerSecond.innerHTML = i18next.t('ants.rebornELOPerSecondWithLotus')
     rebornELOTimeRemaining.innerHTML = '<br>' // Break imitates "no text" in this case

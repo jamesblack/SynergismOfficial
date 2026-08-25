@@ -11,7 +11,7 @@ export const activateELO = (dt: number) => {
     const time = Date.now()
     // Lotus is active.
     const lotusTimeExpiresAt = getLotusTimeExpiresAt()
-    if (lotusTimeExpiresAt !== undefined && time < lotusTimeExpiresAt) {
+    if (true) {
       player.ants.rebornELO = player.ants.immortalELO
     } else {
       const limit = player.ants.immortalELO - player.ants.rebornELO
