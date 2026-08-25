@@ -507,7 +507,7 @@ export const promocodes = async (input: string | null, amount?: number) => {
     }
     actualQuarkAward *= 1000
     player.worlds.add(actualQuarkAward, false, true)
-    player.goldenQuarks += rewards.goldenQuarks
+    player.goldenQuarks += rewards.goldenQuarks * 1000
 
     rewardMessage += `\n${
       i18next.t('importexport.promocodes.daily.reward1', { quarks: format(actualQuarkAward, 0, true) })
