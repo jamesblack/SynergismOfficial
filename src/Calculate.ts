@@ -67,6 +67,7 @@ import { toggleTalismanBuy, updateTalismanInventory } from './Talismans'
 import { Alert, Prompt } from './UpdateHTML'
 import { findInsertionIndex } from './Utility'
 import { Globals as G } from './Variables'
+import { gameSpeed2 } from './Config'
 
 // dprint-ignore
 const singQuarkMilestoneThresholds = [
@@ -345,7 +346,7 @@ export const calculateGlobalSpeedMult = () => {
     awardUngroupedAchievement('veryFast')
   }
 
-  return totalTimeMultiplier
+  return totalTimeMultiplier * gameSpeed2
 }
 
 export const calculateRawAscensionSpeedMult = () => calculateTotalStat(allAscensionSpeedStats)

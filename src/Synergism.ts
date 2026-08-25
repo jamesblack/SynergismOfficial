@@ -4477,9 +4477,8 @@ const tack = (dt: number) => {
   if (!G.timeWarp) {
     // Adds Resources (coins, ants, etc)
     const timeMult = calculateGlobalSpeedMult()
-    resourceGain(dt * timeMult * gameSpeed2)
-    generateAntsAndCrumbs(dt * gameSpeed2)
-    console.log(gameSpeed2)
+    resourceGain(dt * timeMult)
+    generateAntsAndCrumbs(dt)
 
     // Adds time (in milliseconds) to all reset functions, and quarks timer.
     addTimers('prestige', dt)
