@@ -189,7 +189,7 @@ import {
   updateMaxTokens,
   updateTokens
 } from './Campaign'
-import { gameSpeed, lastUpdated, testing, ticksPerSecond, version } from './Config'
+import { gameSpeed, gameSpeed2, lastUpdated, testing, ticksPerSecond, version } from './Config'
 import { WowCubes, WowHypercubes, WowPlatonicCubes, WowTesseracts } from './CubeExperimental'
 import { eventCheck } from './Event'
 import { initMobileStorage, storageGetItem, storageSetItem } from './events/storage-events'
@@ -4477,7 +4477,7 @@ const tack = (dt: number) => {
   if (!G.timeWarp) {
     // Adds Resources (coins, ants, etc)
     const timeMult = calculateGlobalSpeedMult()
-    resourceGain(dt * timeMult * 100)
+    resourceGain(dt * timeMult * gameSpeed2)
     generateAntsAndCrumbs(dt)
 
     // Adds time (in milliseconds) to all reset functions, and quarks timer.

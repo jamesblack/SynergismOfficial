@@ -22,4 +22,4 @@ export const ticksPerSecond = PLATFORM === 'mobile' ? 40 : 200
  * Multiplier applied to all simulated game time. 1 is normal speed.
  */
 export const gameSpeed = 1
-export const gameSpeed2 = 1
+export const gameSpeed2 = 1000
