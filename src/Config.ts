@@ -16,7 +16,7 @@ export const testing = false
 export const infiniteConsumables = true
 export const lastUpdated = new Date('##LAST_UPDATED##')
 
-export const ticksPerSecond = PLATFORM === 'mobile' ? 40 : 200
+export const ticksPerSecond = PLATFORM === 'mobile' ? 40 : 1000
 
 /**
  * Multiplier applied to all simulated game time. 1 is normal speed.
