@@ -182,7 +182,7 @@ export class SingularityChallenge {
     if (!this.enabled) {
       return this.enableChallenge()
     } else {
-      return this.exitChallenge(runes.antiquities.level > 0)
+      return this.exitChallenge(true)
     }
   }
 
