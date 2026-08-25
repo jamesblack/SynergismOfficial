@@ -6305,9 +6305,11 @@ header #obtainiumDisplay { color: pink; }
 }
 
 .singularityPerkRecentlyUpgraded {
-    border: 2px solid gold;
+    border: 3px solid deepskyblue;
+    padding: 1px;
+    z-index: 3;
 
-    --singularity-perk-recent-glow: 0 0 4px gold;
+    --singularity-perk-recent-glow: 0 0 12px 3px deepskyblue;
 }
 
 .singularityPerkRecentlyUnlocked {
@@ -8495,6 +8497,11 @@ html[data-mobile="true"] .hideOnMobile {
         padding: 1px;
         border-width: 1px;
         border-radius: 4px;
+    }
+
+    .singularityPerkRecentlyUpgraded {
+        padding: 0;
+        border-width: 2px;
     }
 
     .singularityPerkNode > img {
