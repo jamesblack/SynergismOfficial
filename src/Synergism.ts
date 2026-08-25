@@ -3777,7 +3777,7 @@ export const resetCheck = async (
     }
 
     if (runes.antiquities.level === 0) {
-      runes.antiquities.level = 1
+      player.runes.antiquities = new Decimal(1)
     }
 
     const thankSing = 300
