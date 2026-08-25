@@ -3192,7 +3192,7 @@ export const singularityPerks: SingularityPerk[] = [
     name: () => {
       return i18next.t('singularity.perks.wowCubeAutomatedShipping.name')
     },
-    levels: [50],
+    levels: [10],
     description: () => {
       return i18next.t(
         'singularity.perks.wowCubeAutomatedShipping.default'

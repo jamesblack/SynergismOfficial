@@ -489,7 +489,7 @@ export const revealStuff = () => {
   }
 
   DOMCacheGetOrSet('toggleAutoCubeUpgrades').style.display = // Auto Cube Upgrades
-    player.highestSingularityCount >= 50
+    player.highestSingularityCount >= 10
       ? 'block'
       : 'none'
   DOMCacheGetOrSet('toggleAutoPlatonicUpgrades').style.display = // Auto Platonic Upgrades

@@ -262,7 +262,7 @@ export const buyCubeUpgrades = (i: number, buyMax = player.cubeUpgradesBuyMaxTog
 export const autoBuyCubeUpgrades = () => {
   if (
     player.autoCubeUpgradesToggle
-    && player.highestSingularityCount >= 50
+    && player.highestSingularityCount >= 10
   ) {
     const cheapest = []
 
