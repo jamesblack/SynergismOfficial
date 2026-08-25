@@ -159,7 +159,7 @@ const offeringPotionThresholds = [
 
 const obtainiumPotionThresholds = [1, 20, 50, 250, 1000, 20000, 4e5, 1e7, 4e8, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15]
 
-export const calculateAllCubeMultiplier = () => calculateTotalStat(allCubeStats)
+export const calculateAllCubeMultiplier = () => calculateTotalStat(allCubeStats) * gameSpeed2
 export const calculateCubeMultiplier = () => calculateTotalStat(allWowCubeStats)
 
 export const calculateCubeMultiplierWithTau = () => {
@@ -174,7 +174,7 @@ export const calculatePlatonicMultiplier = () => calculateTotalStat(allPlatonicC
 export const calculateHepteractMultiplier = () => calculateTotalStat(allHepteractCubeStats)
 export const calculateOcteractMultiplier = () => calculateTotalStat(allOcteractCubeStats)
 
-export const calculateOfferingsDecimal = () => calculateTotalStat(allOfferingStats)
+export const calculateOfferingsDecimal = () => calculateTotalStat(allOfferingStats).times(gameSpeed2)
 export const calculateBaseOfferings = () => calculateTotalStat(allBaseOfferingStats)
 
 export const calculateGlobalTimerModifiers = (time: number, timeMultCheck: boolean) => {
@@ -318,9 +318,9 @@ export const calculateResearchAutomaticObtainium = (deltaTime: number) => {
   return Decimal.max(researchVal, antVal).times(multiplier)
 }
 
-export const calculateQuarkMultiplier = () => calculateTotalStat(allQuarkStats)
+export const calculateQuarkMultiplier = () => calculateTotalStat(allQuarkStats) * gameSpeed2
 
-export const calculateAntSacrificeMultiplier = () => calculateTotalStat(antSacrificeRewardStats)
+export const calculateAntSacrificeMultiplier = () => calculateTotalStat(antSacrificeRewardStats).times(gameSpeed2)
 
 export const calculateGlobalSpeedDRIgnoreMult = () => calculateTotalStat(allGlobalSpeedIgnoreDRStats)
 export const calculateGlobalSpeedDREnabledMult = () => calculateTotalStat(allGlobalSpeedStats)
@@ -362,7 +362,7 @@ export const calculateAscensionSpeedMult = () => {
     base = Math.pow(base, 1 + exponentSpread)
   }
 
-  return base
+  return base * gameSpeed2
 }
 
 export const calculateAmbrosiaAdditiveLuckMult = () => calculateTotalStat(allAdditiveLuckMultStats)
@@ -391,8 +391,8 @@ export const calculatePowderConversion = () => calculateTotalStat(allPowderMulti
  */
 export const calculateMaxWarps = () => 1 + getShopUpgradeEffects('extraWarp', 'additionalWarps')
 
-export const calculateGoldenQuarks = () => calculateTotalStat(allGoldenQuarkMultiplierStats)
-export const calculateGoldenQuarkCost = () => calculateTotalStat(allGoldenQuarkPurchaseCostStats)
+export const calculateGoldenQuarks = () => calculateTotalStat(allGoldenQuarkMultiplierStats) * gameSpeed2
+export const calculateGoldenQuarkCost = () => calculateTotalStat(allGoldenQuarkPurchaseCostStats) * gameSpeed2
 
 export const calculateLuckConversion = () => calculateTotalStat(allLuckConversionStats)
 
@@ -545,7 +545,7 @@ export const calculateActualAntSpeedMult = () => {
     exponent *= 1.25
   }
 
-  return Decimal.pow(base, exponent)
+  return Decimal.pow(base, exponent).times(gameSpeed2)
 }
 
 export const timeWarp = async () => {
